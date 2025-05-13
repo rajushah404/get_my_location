@@ -4,7 +4,10 @@ import 'package:get_my_location/src/location_getter.dart';
 
 void main() {
   testWidgets('Shows loading state initially', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: LocationGetter()));
+    await tester.pumpWidget(const MaterialApp(
+        home: LocationGetter(
+      child: Text("Test Case"),
+    )));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

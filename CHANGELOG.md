@@ -1,3 +1,16 @@
+## [2.0.3] - 2025-05-14
+## Added 
+- Complete UI decoupling: Package no longer renders any built-in UI components
+
+- Three access patterns:
+
+  - Callback-based (onLocationFetched, onError, onLoading)
+
+  - InheritedWidget-style (LocationGetter.of(context))
+
+  - Controller pattern (LocationGetterController)
+ 
+ 
 ## [2.0.2] - 2025-05-13
 ### Added
 - Improved location fetching logic with additional checks for service and permissions.

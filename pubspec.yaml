@@ -1,6 +1,6 @@
 name: get_my_location
 description: A Flutter package to easily fetch and display device location with automatic permission handling. Perfect for apps needing quick GPS access with customizable UI states.
-version: 2.0.2
+version: 2.0.3
 homepage: https://github.com/rajushah404/get_your_location
 repository: https://github.com/rajushah404/get_your_location.git
 issue_tracker: https://github.com/rajushah404/get_your_location/issues

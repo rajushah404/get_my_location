@@ -3,6 +3,7 @@ class LocationData {
   final double longitude;
   final double? accuracy;
   final String? address;
+  final String? error;
   final DateTime timestamp;
 
   LocationData({
@@ -10,26 +11,16 @@ class LocationData {
     required this.longitude,
     this.accuracy,
     this.address,
+    this.error,
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
 
-  Map<String, dynamic> toMap() {
-    return {
-      'latitude': latitude,
-      'longitude': longitude,
-      'accuracy': accuracy,
-      'address': address,
-      'timestamp': timestamp.toIso8601String(),
-    };
-  }
+  bool get hasError => error != null;
+  bool get hasAddress => address != null;
 
-  factory LocationData.fromMap(Map<String, dynamic> map) {
-    return LocationData(
-      latitude: map['latitude'],
-      longitude: map['longitude'],
-      accuracy: map['accuracy'],
-      address: map['address'],
-      timestamp: DateTime.parse(map['timestamp']),
-    );
+  @override
+  String toString() {
+    return 'LocationData(latitude: $latitude, longitude: $longitude, '
+        'accuracy: $accuracy, address: $address, error: $error)';
   }
 }
