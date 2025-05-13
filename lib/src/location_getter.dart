@@ -87,7 +87,7 @@ class _LocationGetterState extends State<LocationGetter> {
         locationSettings: widget.locationSettings,
       );
 
-      // Add this line to update the position
+      // Update the position state
       setState(() => _currentPosition = position);
 
       List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -103,6 +103,7 @@ class _LocationGetterState extends State<LocationGetter> {
         place.country
       ].where((part) => part?.isNotEmpty ?? false).join(', ');
 
+      // Create LocationData object
       var locationData = LocationData(
         latitude: position.latitude,
         longitude: position.longitude,
@@ -123,7 +124,12 @@ class _LocationGetterState extends State<LocationGetter> {
   Widget build(BuildContext context) {
     if (widget.builder != null) {
       return widget.builder!(
-          context, _currentPosition, _isLoading, _error, _currentLocation);
+        context,
+        _currentPosition, // Can still be null
+        _isLoading,
+        _error,
+        _currentLocation, // Use this for showing location
+      );
     }
 
     if (_isLoading) {
@@ -135,20 +141,19 @@ class _LocationGetterState extends State<LocationGetter> {
       return widget.errorWidget ?? Center(child: Text('Error: $_error'));
     }
 
-    if (_currentPosition == null) {
+    if (_currentLocation == null) {
       return const Center(child: Text('No location data available.'));
     }
 
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (_currentLocation != null) ...[
-          Text('Lat: ${_currentLocation!.latitude.toStringAsFixed(6)}'),
-          Text('Lng: ${_currentLocation!.longitude.toStringAsFixed(6)}'),
-          if (_currentLocation!.address != null)
-            Text('Address: ${_currentLocation!.address}'),
-          Text('Accuracy: ${_currentLocation!.accuracy?.toStringAsFixed(2)}m'),
-          Text('Time: ${_currentLocation!.timestamp.toLocal()}'),
-        ],
+        Text('Lat: ${_currentLocation!.latitude.toStringAsFixed(6)}'),
+        Text('Lng: ${_currentLocation!.longitude.toStringAsFixed(6)}'),
+        if (_currentLocation!.address != null)
+          Text('Address: ${_currentLocation!.address}'),
+        Text('Accuracy: ${_currentLocation!.accuracy?.toStringAsFixed(2)}m'),
+        Text('Time: ${_currentLocation!.timestamp.toLocal()}'),
 
         // Conditional Refresh Button
         if (widget.showRefreshButton)

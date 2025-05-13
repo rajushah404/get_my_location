@@ -11,9 +11,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: const Text('Location Example')),
-        body: const LocationGetter(
+        body: LocationGetter(
+          onLocationFetched: (location) {
+            print(
+                'Location fetched: ${location.latitude}, ${location.longitude}');
+            print("Address: ${location.address}");
+          },
           showRefreshButton: true,
-          refreshButtonPadding: EdgeInsets.all(20),
+          refreshButtonPadding: const EdgeInsets.all(20),
         ),
       ),
     );
