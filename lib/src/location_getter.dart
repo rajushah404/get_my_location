@@ -1,23 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get_my_location/src/models/location_data.dart';
 
-/// A widget that fetches and displays the device's current location.
-///
-/// Features:
-/// - Automatic permission handling
-/// - Customizable loading/error states
-/// - Configurable location accuracy
-///
-/// Example:
-/// ```dart
-/// LocationGetter(
-///   builder: (context, position, isLoading, error) {
-///     if (isLoading) return CircularProgressIndicator();
-///     if (error != null) return Text('Error: $error');
-///     return Text('Lat: ${position?.latitude}');
-///   },
-/// )
-/// ```
 class LocationGetter extends StatefulWidget {
   /// Custom builder for the widget.
   final Widget Function(
@@ -25,8 +10,12 @@ class LocationGetter extends StatefulWidget {
     Position? position,
     bool isLoading,
     String? error,
-  )?
-  builder;
+    LocationData? location,
+  )? builder;
+  final ValueChanged<LocationData>? onLocationFetched;
+  final bool showRefreshButton; // New parameter
+  final Widget? refreshButton; // Customizable button
+  final EdgeInsetsGeometry? refreshButtonPadding; // Button positioning
 
   /// Widget to show while loading.
   final Widget? loadingWidget;
@@ -51,6 +40,10 @@ class LocationGetter extends StatefulWidget {
       distanceFilter: 0,
     ),
     this.autoFetchOnInit = true,
+    this.onLocationFetched,
+    this.showRefreshButton = true,
+    this.refreshButton,
+    this.refreshButtonPadding,
   });
 
   @override
@@ -58,6 +51,7 @@ class LocationGetter extends StatefulWidget {
 }
 
 class _LocationGetterState extends State<LocationGetter> {
+  LocationData? _currentLocation;
   Position? _currentPosition;
   bool _isLoading = false;
   String? _error;
@@ -96,22 +90,40 @@ class _LocationGetterState extends State<LocationGetter> {
         locationSettings: widget.locationSettings,
       );
 
-      setState(() {
-        _currentPosition = position;
-        _isLoading = false;
-      });
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      Placemark place = placemarks.first;
+      String address = [
+        place.street,
+        place.locality,
+        place.postalCode,
+        place.country
+      ].where((part) => part?.isNotEmpty ?? false).join(', ');
+
+      var locationData = LocationData(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+        address: address,
+      );
+
+      setState(() => _currentLocation = locationData);
+      widget.onLocationFetched?.call(locationData);
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.builder != null) {
-      return widget.builder!(context, _currentPosition, _isLoading, _error);
+      return widget.builder!(
+          context, _currentPosition, _isLoading, _error, _currentLocation);
     }
 
     if (_isLoading) {
@@ -128,21 +140,26 @@ class _LocationGetterState extends State<LocationGetter> {
     }
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Latitude: ${_currentPosition!.latitude.toStringAsFixed(6)}',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        Text(
-          'Longitude: ${_currentPosition!.longitude.toStringAsFixed(6)}',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _getCurrentLocation,
-          child: const Text('Refresh Location'),
-        ),
+        if (_currentLocation != null) ...[
+          Text('Lat: ${_currentLocation!.latitude.toStringAsFixed(6)}'),
+          Text('Lng: ${_currentLocation!.longitude.toStringAsFixed(6)}'),
+          if (_currentLocation!.address != null)
+            Text('Address: ${_currentLocation!.address}'),
+          Text('Accuracy: ${_currentLocation!.accuracy?.toStringAsFixed(2)}m'),
+          Text('Time: ${_currentLocation!.timestamp.toLocal()}'),
+        ],
+
+        // Conditional Refresh Button
+        if (widget.showRefreshButton)
+          Padding(
+            padding: widget.refreshButtonPadding ?? EdgeInsets.zero,
+            child: widget.refreshButton ??
+                ElevatedButton(
+                  onPressed: _getCurrentLocation,
+                  child: const Text('Refresh Location'),
+                ),
+          ),
       ],
     );
   }

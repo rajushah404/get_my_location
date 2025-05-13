@@ -1,21 +1,17 @@
 # Get My Location 🌍
 
-A Flutter package to easily fetch and display the device's current location with automatic permission handling.
+[![pub package](https://img.shields.io/pub/v/get_my_location.svg)](https://pub.dev/packages/get_my_location)
 
-## Features
-✅ Automatic permission requests  
-✅ Customizable UI (loading/error states)  
-✅ Configurable location accuracy  
-✅ Works on Android & iOS  
+A Flutter package to fetch device location with address lookup and flexible refresh controls.
 
-## Dependency Packages :-
-1. geolocator
-2. permission_handler
+## ✨ Features
+- 📍 Get latitude/longitude with accuracy
+- 🏠 Reverse geocoding for address lookup
+- ⏱️ Automatic timestamp recording
+- 🔄 Configurable refresh button
+- 💾 Easy location data saving
 
-## Installation
--- add [get_my_location]  on pubspec.ymal file on your flutter project -- 
-
-
-
+## 🚀 Installation
+```yaml
 dependencies:
-  get_your_location: ^1.0.0
+  get_my_location: ^2.0.0

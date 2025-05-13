@@ -1,6 +1,10 @@
 
+## 2.0.0
+- Added address reverse geocoding
+- Introduced `LocationData` model
+- Configurable refresh button
+- Added timestamp to location data
+- Improved documentation
 
-## 1.0.0 (2024-05-20)
-- Initial release with basic location fetching.
-- Automatic permission handling.
-- Customizable UI states.
+## 1.0.0
+- Initial release with basic location fetching
