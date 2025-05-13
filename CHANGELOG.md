@@ -1,3 +1,6 @@
+## 2.0.1
+- Fixed "No location data available" bug after permission grant
+- Ensured `_currentPosition` is properly updated
 
 ## 2.0.0
 - Added address reverse geocoding

@@ -69,11 +69,9 @@ class _LocationGetterState extends State<LocationGetter> {
     });
 
     try {
-      // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) throw Exception('Location services are disabled.');
 
-      // Check and request permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -85,10 +83,12 @@ class _LocationGetterState extends State<LocationGetter> {
         }
       }
 
-      // Fetch current position
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: widget.locationSettings,
       );
+
+      // Add this line to update the position
+      setState(() => _currentPosition = position);
 
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
