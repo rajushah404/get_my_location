@@ -14,4 +14,4 @@ A Flutter package to fetch device location with address lookup and flexible refr
 ## 🚀 Installation
 ```yaml
 dependencies:
-  get_my_location: ^2.0.1
+  get_my_location: ^2.0.2
