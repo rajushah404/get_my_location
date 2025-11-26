@@ -17,17 +17,19 @@ class LocationGetterExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LocationGetter(
-      onLocationFetched: (location) {
-        print('Location: ${location.address}');
-      },
-      onError: (error) {
-        print('Error: $error');
-      },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Basic Example')),
-        body: const Center(
-          child: Text('Check console for location updates'),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Get My Location Example')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: LocationGetter(
+            onLocationFetched: (location) {
+              debugPrint('Location fetched: $location');
+            },
+            onError: (error) {
+              debugPrint('Location error: $error');
+            },
+          ),
         ),
       ),
     );
