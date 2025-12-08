@@ -1,3 +1,7 @@
+## [2.1.1] - 2025-11-26
+### Changed
+- Updated dependencies and improved package compatibility
+
 ## [2.0.3] - 2025-05-14
 ## Added 
 - Complete UI decoupling: Package no longer renders any built-in UI components
