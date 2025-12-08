@@ -3,28 +3,29 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get_my_location/src/models/location_data.dart';
 
+/// A widget that fetches and **displays** the user's current location.
+///
+/// It handles permission checks, shows a loading state, renders any error that
+/// occurs, and displays the resolved coordinates and address. A "Refresh"
+/// button is also provided so the user can manually re‑fetch the location.
 class LocationGetter extends StatefulWidget {
-  /// The child widget that will have access to location data
-  final Widget child;
-
-  /// Whether to fetch location automatically when the widget initializes
+  /// Whether to fetch location automatically when the widget initializes.
   final bool autoFetch;
 
-  /// Location settings (accuracy, distance filter)
+  /// Location settings (accuracy, distance filter).
   final LocationSettings locationSettings;
 
-  /// Callback when location is successfully fetched
+  /// Callback when location is successfully fetched.
   final ValueChanged<LocationData>? onLocationFetched;
 
-  /// Callback when location fetching fails
+  /// Callback when location fetching fails.
   final ValueChanged<String>? onError;
 
-  /// Callback when location fetching starts
+  /// Callback when location fetching starts.
   final VoidCallback? onLoading;
 
   const LocationGetter({
     super.key,
-    required this.child,
     this.autoFetch = true,
     this.locationSettings = const LocationSettings(
       accuracy: LocationAccuracy.best,
@@ -36,21 +37,16 @@ class LocationGetter extends StatefulWidget {
   });
 
   @override
-  State<LocationGetter> createState() => LocationGetterState();
-
-  /// Static method to access the LocationGetterState from descendant widgets
-  static LocationGetterState? of(BuildContext context) {
-    return context.findAncestorStateOfType<LocationGetterState>();
-  }
+  State<LocationGetter> createState() => _LocationGetterState();
 }
 
-class LocationGetterState extends State<LocationGetter> {
+class _LocationGetterState extends State<LocationGetter> {
   LocationData? _currentLocation;
   bool _isLoading = false;
   String? _error;
 
-  /// Get the current location
-  Future<void> getLocation() async {
+  /// Get the current location and update the UI.
+  Future<void> _getLocation() async {
     widget.onLoading?.call();
     setState(() {
       _isLoading = true;
@@ -59,42 +55,44 @@ class LocationGetterState extends State<LocationGetter> {
 
     try {
       // Check location services
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw 'Location services are disabled.';
+        throw Exception('Location services are disabled.');
       }
 
       // Check permissions
-      LocationPermission permission = await Geolocator.checkPermission();
+      var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          throw 'Location permissions are denied.';
+          throw Exception('Location permissions are denied.');
         }
       }
       if (permission == LocationPermission.deniedForever) {
-        throw 'Location permissions are permanently denied.';
+        throw Exception('Location permissions are permanently denied.');
       }
 
       // Get position
-      Position position = await Geolocator.getCurrentPosition(
+      final position = await Geolocator.getCurrentPosition(
         locationSettings: widget.locationSettings,
       );
 
-      // Get address
+      // Get address (best‑effort, failures here don't break the whole flow)
       String? address;
       try {
-        List<Placemark> placemarks = await placemarkFromCoordinates(
-            position.latitude, position.longitude);
+        final placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
         if (placemarks.isNotEmpty) {
-          Placemark place = placemarks.first;
+          final place = placemarks.first;
           address = [
             place.street,
             place.subLocality,
             place.locality,
             place.postalCode,
-            place.country
-          ].where((part) => part?.isNotEmpty ?? false).join(', ');
+            place.country,
+          ].where((part) => part != null && part.isNotEmpty).join(', ');
         }
       } catch (e) {
         debugPrint('Geocoding error: $e');
@@ -116,23 +114,82 @@ class LocationGetterState extends State<LocationGetter> {
       setState(() => _error = error);
       widget.onError?.call(error);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   void initState() {
     super.initState();
-    if (widget.autoFetch) getLocation();
+    if (widget.autoFetch) {
+      _isLoading = true;
+      // Trigger the first fetch after the first frame so the initial build
+      // can already show the loading indicator.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _getLocation();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
-  }
+    final theme = Theme.of(context);
 
-  /// Public getters for the current state
-  LocationData? get currentLocation => _currentLocation;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_isLoading) ...[
+          const Center(child: CircularProgressIndicator()),
+          const SizedBox(height: 16),
+          const Center(child: Text('Fetching current location...')),
+        ] else if (_error != null) ...[
+          Icon(Icons.error_outline, color: theme.colorScheme.error),
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+        ] else if (_currentLocation != null) ...[
+          Text(
+            'Your location:',
+            style: theme.textTheme.titleMedium,
+            textAlign: TextAlign.start,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Latitude: ${_currentLocation!.latitude.toStringAsFixed(6)}',
+          ),
+          Text(
+            'Longitude: ${_currentLocation!.longitude.toStringAsFixed(6)}',
+          ),
+          if (_currentLocation!.accuracy != null)
+            Text('Accuracy: ${_currentLocation!.accuracy!.toStringAsFixed(1)} m'),
+          if (_currentLocation!.address != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _currentLocation!.address!,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ] else ...[
+          const Text('Location not fetched yet.'),
+        ],
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            onPressed: _isLoading ? null : _getLocation,
+            icon: const Icon(Icons.my_location),
+            label: const Text('Refresh location'),
+          ),
+        ),
+      ],
+    );
+  }
 }
